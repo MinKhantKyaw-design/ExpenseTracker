@@ -1,0 +1,344 @@
+﻿@model IEnumerable<ExpenseTracker.DTOs.ExpenseDto>
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/expenses.css"
+          asp-append-version="true" />
+}
+
+@{
+    ViewData["Title"] = "Expenses";
+
+    var categories =
+        ViewBag.Categories
+        as IEnumerable<ExpenseTracker.DTOs.CategoryDto>;
+
+    DateOnly? fromDate = ViewBag.FromDate;
+    DateOnly? toDate = ViewBag.ToDate;
+    int? categoryId = ViewBag.CategoryId;
+
+    string sortBy = ViewBag.SortBy ?? "date";
+    string sortDirection = ViewBag.SortDirection ?? "desc";
+
+    string nextDateDirection =
+        sortBy == "date" && sortDirection == "asc"
+            ? "desc"
+            : "asc";
+
+    string nextAmountDirection =
+        sortBy == "amount" && sortDirection == "asc"
+            ? "desc"
+            : "asc";
+}
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h2>Expenses</h2>
+
+        <a asp-action="Create"
+           class="btn btn-primary">
+            + Add Expense
+        </a>
+
+    </div>
+
+
+    <!-- Success Message -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+
+    <!-- Error Message -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+
+    <!-- Filter -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form asp-action="Index"
+                  method="get">
+
+                <div class="row">
+
+                    <!-- From Date -->
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            From Date
+                        </label>
+
+                        <input type="date"
+                               name="fromDate"
+                               class="form-control"
+                               value="@fromDate?.ToString("yyyy-MM-dd")" />
+
+                    </div>
+
+
+                    <!-- To Date -->
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            To Date
+                        </label>
+
+                        <input type="date"
+                               name="toDate"
+                               class="form-control"
+                               value="@toDate?.ToString("yyyy-MM-dd")" />
+
+                    </div>
+
+
+                    <!-- Category -->
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Category
+                        </label>
+
+                        <select name="categoryId"
+                                class="form-select">
+
+                            <option value="">
+                                All Categories
+                            </option>
+
+                            @foreach (var category in categories ?? [])
+                            {
+                                <option value="@category.CategoryID"
+                                        selected="@(categoryId == category.CategoryID)">
+                                    @category.Name
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Filter Buttons -->
+                    <div class="col-md-3 d-flex align-items-end">
+
+                        <button type="submit"
+                                class="btn btn-primary me-2">
+                            Filter
+                        </button>
+
+                        <a asp-action="Index"
+                           class="btn btn-secondary">
+                            Clear
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- Expense List -->
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            No expenses found.
+        </div>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover">
+
+            <thead>
+                <tr>
+
+                    <!-- ID -->
+                    <th>
+                        ID
+                    </th>
+
+
+                    <!-- Category -->
+                    <th>
+                        Category
+                    </th>
+
+
+                    <!-- Amount -->
+                    <th>
+
+                        <a asp-action="Index"
+                           asp-route-fromDate="@fromDate"
+                           asp-route-toDate="@toDate"
+                           asp-route-categoryId="@categoryId"
+                           asp-route-sortBy="amount"
+                           asp-route-sortDirection="@nextAmountDirection"
+                           class="sort-header">
+
+                            <span>
+                                Amount
+                            </span>
+
+                            @if (sortBy == "amount")
+                            {
+                                if (sortDirection == "asc")
+                                {
+                                    <span class="sort-icon">
+                                        ↑
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="sort-icon">
+                                        ↓
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="sort-icon">
+                                    ↕
+                                </span>
+                            }
+
+                        </a>
+
+                    </th>
+
+
+                    <!-- Date -->
+                    <th>
+
+                        <a asp-action="Index"
+                           asp-route-fromDate="@fromDate"
+                           asp-route-toDate="@toDate"
+                           asp-route-categoryId="@categoryId"
+                           asp-route-sortBy="date"
+                           asp-route-sortDirection="@nextDateDirection"
+                           class="sort-header">
+
+                            <span>
+                                Date
+                            </span>
+
+                            @if (sortBy == "date")
+                            {
+                                if (sortDirection == "asc")
+                                {
+                                    <span class="sort-icon">
+                                        ↑
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="sort-icon">
+                                        ↓
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="sort-icon">
+                                    ↕
+                                </span>
+                            }
+
+                        </a>
+
+                    </th>
+
+
+                    <!-- Notes -->
+                    <th>
+                        Notes
+                    </th>
+
+
+                    <!-- Actions -->
+                    <th style="width: 180px;">
+                        Actions
+                    </th>
+
+                </tr>
+            </thead>
+
+
+            <tbody>
+
+                @foreach (var expense in Model)
+                {
+                    <tr>
+
+                        <!-- ID -->
+                        <td>
+                            @expense.ExpenseID
+                        </td>
+
+
+                        <!-- Category -->
+                        <td>
+                            @expense.CategoryName
+                        </td>
+
+
+                        <!-- Amount -->
+                        <td>
+                            @expense.Amount.ToString("N2")
+                        </td>
+
+
+                        <!-- Date -->
+                        <td>
+                            @expense.Date.ToString("yyyy-MM-dd")
+                        </td>
+
+
+                        <!-- Notes -->
+                        <td>
+                            @expense.Notes
+                        </td>
+
+
+                        <!-- Actions -->
+                        <td>
+
+                            <a asp-action="Edit"
+                               asp-route-id="@expense.ExpenseID"
+                               class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            <a asp-action="Delete"
+                               asp-route-id="@expense.ExpenseID"
+                               class="btn btn-sm btn-danger">
+                                Delete
+                            </a>
+
+                        </td>
+
+                    </tr>
+                }
+
+            </tbody>
+
+        </table>
+    }
+
+</div>

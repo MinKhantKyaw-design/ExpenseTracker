@@ -1,0 +1,119 @@
+﻿@model ExpenseTracker.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container">
+
+    <h2 class="mb-4">Dashboard</h2>
+
+    <!-- Summary Cards -->
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Total Spent Today
+                    </h5>
+
+                    <h2>
+                        @Model.TodayTotal.ToString("N2")
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Total Spent This Week
+                    </h5>
+
+                    <h2>
+                        @Model.WeekTotal.ToString("N2")
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Total Spent This Month
+                    </h5>
+
+                    <h2>
+                        @Model.MonthTotal.ToString("N2")
+                    </h2>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- Category Chart -->
+    <div class="card shadow-sm mt-4">
+
+        <div class="card-body">
+
+            <h4>Expenses by Category</h4>
+
+            <div id="expenseChart"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+
+        var categoryNames = [
+                    @foreach (var item in Model.CategorySummary)
+            {
+                <text>"@item.CategoryName",</text>
+                    }
+                ];
+
+        var categoryAmounts = [
+                    @foreach (var item in Model.CategorySummary)
+            {
+                <text>@item.TotalAmount,</text>
+                    }
+                ];
+
+        var options = {
+            series: categoryAmounts,
+
+            chart: {
+                type: 'donut',
+                height: 350
+            },
+
+            labels: categoryNames
+        };
+
+        var chart = new ApexCharts(
+            document.querySelector("#expenseChart"),
+            options
+        );
+
+        chart.render();
+
+    </script>
+}

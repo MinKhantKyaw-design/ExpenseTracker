@@ -1,0 +1,122 @@
+﻿@model ExpenseTracker.DTOs.ExpenseRequest
+
+@{
+    ViewData["Title"] = "Edit Expense";
+
+    var categories =
+        ViewBag.Categories
+        as IEnumerable<ExpenseTracker.DTOs.CategoryDto>;
+}
+
+<div class="container">
+
+    <h2>Edit Expense</h2>
+
+    <form asp-action="Edit"
+          asp-route-id="@ViewBag.ExpenseId"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+
+            <input type="hidden" asp-for="UserID" />
+
+            <label asp-for="CategoryID"
+                   class="form-label">
+                Category
+            </label>
+
+            <select asp-for="CategoryID"
+                    class="form-select">
+
+                <option value="">
+                    Miscellaneous
+                </option>
+
+                @foreach (var category in categories ?? [])
+                {
+                    <option value="@category.CategoryID">
+                        @category.Name
+                    </option>
+                }
+
+            </select>
+
+            <span asp-validation-for="CategoryID"
+                  class="text-danger"></span>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Amount"
+                   class="form-label">
+                Amount
+            </label>
+
+            <input asp-for="Amount"
+                   type="number"
+                   step="0.01"
+                   class="form-control" />
+
+            <span asp-validation-for="Amount"
+                  class="text-danger"></span>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Date"
+                   class="form-label">
+                Date
+            </label>
+
+            <input asp-for="Date"
+                   type="date"
+                   class="form-control" />
+
+            <span asp-validation-for="Date"
+                  class="text-danger"></span>
+
+        </div>
+
+        <div class="mb-3">
+
+            <label asp-for="Notes"
+                   class="form-label">
+                Notes
+            </label>
+
+            <textarea asp-for="Notes"
+                      class="form-control"
+                      rows="3"></textarea>
+
+            <span asp-validation-for="Notes"
+                  class="text-danger"></span>
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary">
+            Update
+        </button>
+
+        <a asp-action="Index"
+           class="btn btn-secondary">
+            Cancel
+        </a>
+
+    </form>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync(
+            "_ValidationScriptsPartial");
+    }
+}
