@@ -205,6 +205,9 @@ ExpenseTracker
 
 
 
+dotnet ef dbcontext scaffold "Server=.;Database=ExpenseTrackerDB;Trusted_Connection=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer --project ExpenseTracker.Database --context-dir Context --context ExpenseTrackerDBContext -o Models --force
+
+
 
 \###Technology stack can therefore be presented as:
 

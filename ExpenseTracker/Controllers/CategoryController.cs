@@ -1,16 +1,21 @@
-﻿using ExpenseTracker.DTOs;
+﻿using ExpenseTracker.Common.Constants;
+using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Interfaces;
+using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseTracker.Controllers
 {
     public class CategoryController : Controller
     {
+        private readonly CategoryValidator _categoryValidator;
         private readonly ICategoryService _categoryService;
 
         public CategoryController(
+            CategoryValidator categoryValidator,
             ICategoryService categoryService)
         {
+            _categoryValidator = categoryValidator;
             _categoryService = categoryService;
         }
 
@@ -32,8 +37,7 @@ namespace ExpenseTracker.Controllers
         // POST: /Category/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            CategoryRequest request)
+        public async Task<IActionResult> Create(CategoryRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -42,10 +46,11 @@ namespace ExpenseTracker.Controllers
 
             try
             {
+                await _categoryValidator.ValidateCategoryInfoInput(request);
+
                 await _categoryService.CreateAsync(request);
 
-                TempData["SuccessMessage"] =
-                    "Category created successfully.";
+                TempData["SuccessMessage"] = CategoryDataMessage.CategoryCreatedSuccess;
 
                 return RedirectToAction(nameof(Index));
             }
@@ -84,8 +89,7 @@ namespace ExpenseTracker.Controllers
         // POST: /Category/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id, CategoryRequest request)
+        public async Task<IActionResult> Edit( int id, CategoryRequest request )
         {
             if (!ModelState.IsValid)
             {
@@ -95,16 +99,14 @@ namespace ExpenseTracker.Controllers
 
             try
             {
-                var updated =
-                    await _categoryService.UpdateAsync(
-                        id,
-                        request);
+                await _categoryValidator.ValidateCategoryInfoInput(request, id);
+
+                var updated = await _categoryService.UpdateAsync( id, request);
 
                 if (!updated)
                     return NotFound();
 
-                TempData["SuccessMessage"] =
-                    "Category updated successfully.";
+                TempData["SuccessMessage"] = CategoryDataMessage.CategoryEditedSuccess;
 
                 return RedirectToAction(nameof(Index));
             }
@@ -140,8 +142,7 @@ namespace ExpenseTracker.Controllers
         // POST: /Category/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(
-            int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {
@@ -151,8 +152,7 @@ namespace ExpenseTracker.Controllers
                 if (!deleted)
                     return NotFound();
 
-                TempData["SuccessMessage"] =
-                    "Category deleted successfully.";
+                TempData["SuccessMessage"] = CategoryDataMessage.CategoryDeletedSuccess;
 
                 return RedirectToAction(nameof(Index));
             }

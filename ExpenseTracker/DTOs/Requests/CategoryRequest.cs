@@ -1,4 +1,4 @@
-﻿namespace ExpenseTracker.DTOs
+﻿namespace ExpenseTracker.DTOs.Requests
 {
     public class CategoryRequest
     {

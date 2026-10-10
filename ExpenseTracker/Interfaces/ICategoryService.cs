@@ -1,4 +1,5 @@
 ﻿using ExpenseTracker.DTOs;
+using ExpenseTracker.DTOs.Requests;
 
 namespace ExpenseTracker.Interfaces
 {

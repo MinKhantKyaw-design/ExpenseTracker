@@ -1,6 +1,7 @@
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.Interfaces;
 using ExpenseTracker.Services;
+using ExpenseTracker.Validators;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<CategoryValidator>();
+
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<ExpenseValidator>();
+
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddDbContext<ExpenseTrackerDBContext>(options =>

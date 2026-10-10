@@ -1,7 +1,9 @@
-﻿using ExpenseTracker.DTOs;
-using ExpenseTracker.Interfaces;
+﻿using ExpenseTracker.Common.Constants;
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
+using ExpenseTracker.DTOs;
+using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Services
@@ -43,21 +45,9 @@ namespace ExpenseTracker.Services
 
         public async Task<CategoryDto> CreateAsync(CategoryRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Name))
-                throw new ArgumentException("Category name is required.");
-
-            string categoryName = request.Name!.Trim(); // use ! after validation
-
-            bool exists = await _context.Categories
-                .AnyAsync(x => x.Name.ToLower() == categoryName.ToLower() && x.DelFlg == false);
-
-            if (exists)
-                throw new InvalidOperationException(
-                    "A category with this name already exists.");
-
             var category = new Category
             {
-                Name = categoryName,
+                Name = request.Name!.Trim(),
                 Description = request.Description?.Trim()
             };
 
@@ -73,32 +63,15 @@ namespace ExpenseTracker.Services
             };
         }
 
-        public async Task<bool> UpdateAsync(
-            int id,
-            CategoryRequest request)
+        public async Task<bool> UpdateAsync(int id, CategoryRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Name))
-                throw new ArgumentException("Category name is required.");
-
             var category = await _context.Categories
                 .FirstOrDefaultAsync(x => x.CategoryId == id && x.DelFlg == false);
 
             if (category == null)
                 return false;
 
-            string categoryName = request.Name!.Trim(); // use ! after validation
-
-            bool exists = await _context.Categories
-                .AnyAsync(x =>
-                    x.CategoryId != id &&
-                    x.Name.ToLower() == categoryName.ToLower() &&
-                    x.DelFlg == false);
-
-            if (exists)
-                throw new InvalidOperationException(
-                    "A category with this name already exists.");
-
-            category.Name = categoryName;
+            category.Name = request.Name!.Trim();
             category.Description = request.Description?.Trim();
 
             await _context.SaveChangesAsync();
@@ -119,7 +92,7 @@ namespace ExpenseTracker.Services
             if (category.Name == "Miscellaneous")
             {
                 throw new InvalidOperationException(
-                    "The Miscellaneous category cannot be deleted.");
+                    CategoryDataMessage.MiscellaneousCategoryDeleteError);
             }
 
             bool hasExpenses = await _context.Expenses
@@ -130,7 +103,7 @@ namespace ExpenseTracker.Services
             if (hasExpenses)
             {
                 throw new InvalidOperationException(
-                    "Cannot delete a category that has expenses.");
+                    CategoryDataMessage.DeleteHasExpenseError);
             }
 
             // Soft delete

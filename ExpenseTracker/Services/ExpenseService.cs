@@ -1,7 +1,10 @@
-﻿using ExpenseTracker.DTOs;
-using ExpenseTracker.Interfaces;
+﻿using ExpenseTracker.Common.Constants;
+using ExpenseTracker.Common.Enums;
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
+using ExpenseTracker.DTOs;
+using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Services
@@ -21,44 +24,36 @@ namespace ExpenseTracker.Services
         // - Category filter
         // - Sort by date
         // - Sort by amount
-        public async Task<IEnumerable<ExpenseDto>> GetAllAsync(
-            int userId,
-            DateOnly? fromDate = null,
-            DateOnly? toDate = null,
-            int? categoryId = null,
-            string sortBy = "date",
-            string sortDirection = "desc")
+        public async Task<IEnumerable<ExpenseDto>> GetAllAsync(GetExpenseListRequest request)
         {
             var query = _context.Expenses
-                .Where(x =>
-                    x.UserId == userId &&
-                    x.DelFlg == false);
+                .Where(x => x.UserId == request.UserID && x.DelFlg == false);
 
             // Filter by From Date
-            if (fromDate.HasValue)
+            if (request.FromDate.HasValue)
             {
                 query = query.Where(x =>
-                    x.Date >= fromDate.Value);
+                    x.Date >= request.FromDate.Value);
             }
 
             // Filter by To Date
-            if (toDate.HasValue)
+            if (request.ToDate.HasValue)
             {
                 query = query.Where(x =>
-                    x.Date <= toDate.Value);
+                    x.Date <= request.ToDate.Value);
             }
 
             // Filter by Category
-            if (categoryId.HasValue)
+            if (request.CategoryID.HasValue)
             {
                 query = query.Where(x =>
-                    x.CategoryId == categoryId.Value);
+                    x.CategoryId == request.CategoryID.Value);
             }
 
             // Sort
-            if (sortBy?.ToLower() == "amount")
+            if (request.SortBy == eExpenseListSortBy.SortByAmount)
             {
-                if (sortDirection?.ToLower() == "asc")
+                if (request.SortDirection == eSortOrder.Ascending)
                 {
                     query = query.OrderBy(x => x.Amount);
                 }
@@ -69,7 +64,7 @@ namespace ExpenseTracker.Services
             }
             else
             {
-                if (sortDirection?.ToLower() == "asc")
+                if (request.SortDirection == eSortOrder.Ascending)
                 {
                     query = query.OrderBy(x => x.Date);
                 }
@@ -119,62 +114,10 @@ namespace ExpenseTracker.Services
         public async Task<ExpenseDto> CreateAsync(
             ExpenseRequest request)
         {
-            ValidateExpense(request);
-
-            // Validate User
-            var userExists = await _context.Users
-                .AnyAsync(x =>
-                    x.UserId == request.UserID &&
-                    x.DelFlg == false);
-
-            if (!userExists)
-            {
-                throw new ArgumentException(
-                    "User does not exist.");
-            }
-
-            int categoryId;
-
-            // Category selected
-            if (request.CategoryID.HasValue &&
-                request.CategoryID.Value > 0)
-            {
-                categoryId = request.CategoryID.Value;
-
-                var categoryExists =
-                    await _context.Categories
-                        .AnyAsync(x =>
-                            x.CategoryId == categoryId &&
-                            x.DelFlg == false);
-
-                if (!categoryExists)
-                {
-                    throw new ArgumentException(
-                        "Category does not exist.");
-                }
-            }
-            // No category selected
-            // Use Miscellaneous
-            else
-            {
-                categoryId = await _context.Categories
-                    .Where(x =>
-                        x.Name == "Miscellaneous" &&
-                        x.DelFlg == false)
-                    .Select(x => x.CategoryId)
-                    .SingleOrDefaultAsync();
-
-                if (categoryId == 0)
-                {
-                    throw new InvalidOperationException(
-                        "Miscellaneous category does not exist.");
-                }
-            }
-
             var expense = new Expense
             {
                 UserId = request.UserID,
-                CategoryId = categoryId,
+                CategoryId = request.CategoryID ?? 0,
                 Amount = request.Amount,
                 Date = request.Date,
                 Notes = request.Notes?.Trim(),
@@ -194,8 +137,6 @@ namespace ExpenseTracker.Services
             int id,
             ExpenseRequest request)
         {
-            ValidateExpense(request);
-
             // Find expense belonging to current user
             // and not soft-deleted
             var expense = await _context.Expenses
@@ -208,58 +149,8 @@ namespace ExpenseTracker.Services
                 return false;
             }
 
-            // Validate User
-            var userExists = await _context.Users
-                .AnyAsync(x =>
-                    x.UserId == request.UserID &&
-                    x.DelFlg == false);
-
-            if (!userExists)
-            {
-                throw new ArgumentException(
-                    "User does not exist.");
-            }
-
-            int categoryId;
-
-            // Category selected
-            if (request.CategoryID.HasValue &&
-                request.CategoryID.Value > 0)
-            {
-                categoryId = request.CategoryID.Value;
-
-                var categoryExists =
-                    await _context.Categories
-                        .AnyAsync(x =>
-                            x.CategoryId == categoryId &&
-                            x.DelFlg == false);
-
-                if (!categoryExists)
-                {
-                    throw new ArgumentException(
-                        "Category does not exist.");
-                }
-            }
-            // No category selected
-            // Use Miscellaneous
-            else
-            {
-                categoryId = await _context.Categories
-                    .Where(x =>
-                        x.Name == "Miscellaneous" &&
-                        x.DelFlg == false)
-                    .Select(x => x.CategoryId)
-                    .SingleOrDefaultAsync();
-
-                if (categoryId == 0)
-                {
-                    throw new InvalidOperationException(
-                        "Miscellaneous category does not exist.");
-                }
-            }
-
             expense.UserId = request.UserID;
-            expense.CategoryId = categoryId;
+            expense.CategoryId = request.CategoryID ?? 0;
             expense.Amount = request.Amount;
             expense.Date = request.Date;
             expense.Notes = request.Notes?.Trim();
@@ -299,20 +190,20 @@ namespace ExpenseTracker.Services
             if (request.Amount <= 0)
             {
                 throw new ArgumentException(
-                    "Expense amount must be greater than 0.");
+                    ExpenseDataMessage.ExpenseLessThanZeroError);
             }
 
             if (request.Date == default)
             {
                 throw new ArgumentException(
-                    "Expense date is required.");
+                    ExpenseDataMessage.ExpenseDateRequireError);
             }
 
             if (request.Date >
                 DateOnly.FromDateTime(DateTime.Today))
             {
                 throw new ArgumentException(
-                    "Expense date cannot be in the future.");
+                    ExpenseDataMessage.ExpenseDateInFutureError);
             }
         }
     }

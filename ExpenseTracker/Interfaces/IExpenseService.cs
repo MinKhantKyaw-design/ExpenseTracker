@@ -1,10 +1,11 @@
 ﻿using ExpenseTracker.DTOs;
+using ExpenseTracker.DTOs.Requests;
 
 namespace ExpenseTracker.Interfaces
 {
     public interface IExpenseService
     {
-        Task<IEnumerable<ExpenseDto>> GetAllAsync(int userId, DateOnly? fromDate = null, DateOnly? toDate = null, int? categoryId = null, string sortBy = "date", string sortDirection = "desc");
+        Task<IEnumerable<ExpenseDto>> GetAllAsync(GetExpenseListRequest request);
 
         Task<ExpenseDto> GetByIdAsync(int id);
 

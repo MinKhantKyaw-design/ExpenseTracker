@@ -1,9 +1,8 @@
 ﻿@model IEnumerable<ExpenseTracker.DTOs.ExpenseDto>
+@using ExpenseTracker.Common.Enums
 
 @section Styles {
-    <link rel="stylesheet"
-          href="~/css/expenses.css"
-          asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/expenses.css" asp-append-version="true" />
 }
 
 @{
@@ -17,18 +16,18 @@
     DateOnly? toDate = ViewBag.ToDate;
     int? categoryId = ViewBag.CategoryId;
 
-    string sortBy = ViewBag.SortBy ?? "date";
-    string sortDirection = ViewBag.SortDirection ?? "desc";
+    eExpenseListSortBy sortBy = ViewBag.SortBy ?? eExpenseListSortBy.SortByDate;
+    eSortOrder sortDirection = ViewBag.SortDirection ?? eSortOrder.Descending;
 
-    string nextDateDirection =
-        sortBy == "date" && sortDirection == "asc"
-            ? "desc"
-            : "asc";
+    eSortOrder nextDateDirection =
+        sortBy.Equals(eExpenseListSortBy.SortByDate) && sortDirection.Equals(eSortOrder.Ascending)
+            ? eSortOrder.Descending
+            : eSortOrder.Ascending;
 
-    string nextAmountDirection =
-        sortBy == "amount" && sortDirection == "asc"
-            ? "desc"
-            : "asc";
+    eSortOrder nextAmountDirection =
+        sortBy.Equals(eExpenseListSortBy.SortByAmount) && sortDirection.Equals(eSortOrder.Ascending)
+            ? eSortOrder.Descending
+            : eSortOrder.Ascending;
 }
 
 <div class="container">
@@ -188,7 +187,7 @@
                            asp-route-fromDate="@fromDate"
                            asp-route-toDate="@toDate"
                            asp-route-categoryId="@categoryId"
-                           asp-route-sortBy="amount"
+                           asp-route-sortBy="@eExpenseListSortBy.SortByAmount"
                            asp-route-sortDirection="@nextAmountDirection"
                            class="sort-header">
 
@@ -196,9 +195,9 @@
                                 Amount
                             </span>
 
-                            @if (sortBy == "amount")
+                            @if (sortBy.Equals(eExpenseListSortBy.SortByAmount))
                             {
-                                if (sortDirection == "asc")
+                                if (sortDirection.Equals(eSortOrder.Ascending))
                                 {
                                     <span class="sort-icon">
                                         ↑
@@ -230,7 +229,7 @@
                            asp-route-fromDate="@fromDate"
                            asp-route-toDate="@toDate"
                            asp-route-categoryId="@categoryId"
-                           asp-route-sortBy="date"
+                           asp-route-sortBy="@eExpenseListSortBy.SortByDate"
                            asp-route-sortDirection="@nextDateDirection"
                            class="sort-header">
 
@@ -238,9 +237,9 @@
                                 Date
                             </span>
 
-                            @if (sortBy == "date")
+                            @if (sortBy.Equals(eExpenseListSortBy.SortByDate))
                             {
-                                if (sortDirection == "asc")
+                                if (sortDirection.Equals(eSortOrder.Ascending))
                                 {
                                     <span class="sort-icon">
                                         ↑

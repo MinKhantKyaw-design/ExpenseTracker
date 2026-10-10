@@ -1,5 +1,7 @@
-﻿using ExpenseTracker.DTOs;
+﻿using ExpenseTracker.Common.Constants;
+using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Interfaces;
+using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseTracker.Controllers
@@ -8,41 +10,32 @@ namespace ExpenseTracker.Controllers
     {
         private readonly IExpenseService _expenseService;
         private readonly ICategoryService _categoryService;
+        private readonly ExpenseValidator _expenseValidator;
 
         public ExpensesController(
             IExpenseService expenseService,
-            ICategoryService categoryService)
+            ICategoryService categoryService,
+            ExpenseValidator expenseValidator)
         {
             _expenseService = expenseService;
             _categoryService = categoryService;
+            _expenseValidator = expenseValidator;
         }
 
         // GET: /Expenses
-        public async Task<IActionResult> Index(
-            DateOnly? fromDate,
-            DateOnly? toDate,
-            int? categoryId,
-            string sortBy = "date",
-            string sortDirection = "desc")
+        public async Task<IActionResult> Index(GetExpenseListRequest request)
         {
-            int userId = 1;
+            request.UserID = 1;
 
-            var expenses = await _expenseService.GetAllAsync(
-                userId,
-                fromDate,
-                toDate,
-                categoryId,
-                sortBy,
-                sortDirection);
+            var expenses = await _expenseService.GetAllAsync(request);
 
-            ViewBag.Categories =
-                await _categoryService.GetAllAsync();
+            ViewBag.Categories = await _categoryService.GetAllAsync();
 
-            ViewBag.FromDate = fromDate;
-            ViewBag.ToDate = toDate;
-            ViewBag.CategoryId = categoryId;
-            ViewBag.SortBy = sortBy;
-            ViewBag.SortDirection = sortDirection;
+            ViewBag.FromDate = request.FromDate;
+            ViewBag.ToDate = request.ToDate;
+            ViewBag.CategoryId = request.CategoryID;
+            ViewBag.SortBy = request.SortBy;
+            ViewBag.SortDirection = request.SortDirection;
 
             return View(expenses);
         }
@@ -74,10 +67,18 @@ namespace ExpenseTracker.Controllers
             {
                 request.UserID = 1;
 
+                await _expenseValidator.ValidateInputAndUserExist(request);
+
+                int? categoryId = await _expenseValidator.ValidateCategoryID(request.CategoryID);
+
+                if (categoryId == null || categoryId == 0)
+                {
+                    throw new ArgumentException(ExpenseDataMessage.CategoryDoesNotExistError);
+                }
+
                 await _expenseService.CreateAsync(request);
 
-                TempData["SuccessMessage"] =
-                    "Expense created successfully.";
+                TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseCreatedSuccess;
 
                 return RedirectToAction(nameof(Index));
             }
@@ -124,13 +125,11 @@ namespace ExpenseTracker.Controllers
         // POST: /Expenses/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id,
-            ExpenseRequest request)
+        public async Task<IActionResult> Edit(int expenseID,ExpenseRequest request)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.ExpenseId = id;
+                ViewBag.ExpenseId = expenseID;
 
                 ViewBag.Categories =
                     await _categoryService.GetAllAsync();
@@ -140,15 +139,23 @@ namespace ExpenseTracker.Controllers
 
             try
             {
+                await _expenseValidator.ValidateInputAndUserExist(request);
 
-                var updated =
-                    await _expenseService.UpdateAsync(id,request);
+                int? categoryId = await _expenseValidator.ValidateCategoryID(request.CategoryID);
+
+                if(categoryId == null || categoryId == 0)
+                {
+                    throw new ArgumentException(ExpenseDataMessage.CategoryDoesNotExistError);
+                }
+
+                request.CategoryID = categoryId;
+
+                var updated = await _expenseService.UpdateAsync(expenseID,request);
 
                 if (!updated)
                     return NotFound();
 
-                TempData["SuccessMessage"] =
-                    "Expense updated successfully.";
+                TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseEditedSuccess;
 
                 return RedirectToAction(nameof(Index));
             }
@@ -158,10 +165,9 @@ namespace ExpenseTracker.Controllers
                     string.Empty,
                     ex.Message);
 
-                ViewBag.ExpenseId = id;
+                ViewBag.ExpenseId = expenseID;
 
-                ViewBag.Categories =
-                    await _categoryService.GetAllAsync();
+                ViewBag.Categories = await _categoryService.GetAllAsync();
 
                 return View(request);
             }
@@ -194,8 +200,7 @@ namespace ExpenseTracker.Controllers
                 if (!deleted)
                     return NotFound();
 
-                TempData["SuccessMessage"] =
-                    "Expense deleted successfully.";
+                TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseDeletedSuccess;
 
                 return RedirectToAction(nameof(Index));
             }
