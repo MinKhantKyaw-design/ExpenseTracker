@@ -1,13 +1,15 @@
 using ExpenseTracker.Interfaces;
 using ExpenseTracker.Models;
 using ExpenseTracker.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace ExpenseTracker.Controllers
 {
-    public class HomeController : Controller
+    [Authorize]
+    public class HomeController : BaseController
     {
 
         private readonly IDashboardService _dashboardService;
@@ -22,7 +24,7 @@ namespace ExpenseTracker.Controllers
 
         public async Task<IActionResult> Index()
         {
-            int userId = 1;
+            int userId = GetCurrentUserId();
 
             var model = new DashboardViewModel
             {

@@ -13,5 +13,7 @@ public partial class User
 
     public bool DelFlg { get; set; }
 
+    public string Password { get; set; } = null!;
+
     public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 }

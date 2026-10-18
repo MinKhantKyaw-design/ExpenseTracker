@@ -2,11 +2,13 @@
 using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Interfaces;
 using ExpenseTracker.Validators;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseTracker.Controllers
 {
-    public class ExpensesController : Controller
+    [Authorize]
+    public class ExpensesController : BaseController
     {
         private readonly IExpenseService _expenseService;
         private readonly ICategoryService _categoryService;
@@ -25,7 +27,7 @@ namespace ExpenseTracker.Controllers
         // GET: /Expenses
         public async Task<IActionResult> Index(GetExpenseListRequest request)
         {
-            request.UserID = 1;
+            request.UserID = GetCurrentUserId();
 
             var expenses = await _expenseService.GetAllAsync(request);
 
@@ -65,7 +67,7 @@ namespace ExpenseTracker.Controllers
 
             try
             {
-                request.UserID = 1;
+                request.UserID = GetCurrentUserId();
 
                 await _expenseValidator.ValidateInputAndUserExist(request);
 
@@ -75,6 +77,8 @@ namespace ExpenseTracker.Controllers
                 {
                     throw new ArgumentException(ExpenseDataMessage.CategoryDoesNotExistError);
                 }
+
+                request.CategoryID = categoryId;
 
                 await _expenseService.CreateAsync(request);
 

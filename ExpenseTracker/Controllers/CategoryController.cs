@@ -2,11 +2,13 @@
 using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Interfaces;
 using ExpenseTracker.Validators;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseTracker.Controllers
 {
-    public class CategoryController : Controller
+    [Authorize]
+    public class CategoryController : BaseController
     {
         private readonly CategoryValidator _categoryValidator;
         private readonly ICategoryService _categoryService;
