@@ -30,8 +30,6 @@ public partial class ExpenseTrackerDBContext : DbContext
     {
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasIndex(e => e.Name, "UQ_Categories_Name").IsUnique();
-
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.Name).HasMaxLength(100);

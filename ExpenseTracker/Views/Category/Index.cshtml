@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Categories";
+    int rowNumber = 1;
 }
 
 <div class="container">
@@ -61,7 +62,7 @@
                     <tr>
 
                         <td>
-                            @category.CategoryID
+                            @rowNumber
                         </td>
 
                         <td>
@@ -89,6 +90,7 @@
                         </td>
 
                     </tr>
+                    rowNumber++;
                 }
 
             </tbody>
