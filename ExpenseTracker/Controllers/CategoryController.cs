@@ -1,6 +1,6 @@
 ﻿using ExpenseTracker.Common.Constants;
 using ExpenseTracker.DTOs.Requests;
-using ExpenseTracker.Interfaces;
+using ExpenseTracker.Interfaces.Categories;
 using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,21 +11,26 @@ namespace ExpenseTracker.Controllers
     public class CategoryController : BaseController
     {
         private readonly CategoryValidator _categoryValidator;
-        private readonly ICategoryService _categoryService;
+        private readonly ICategoryCommandHandler _categoryCommandHandler;
+
+        private readonly ICategoryQueryHandler _categoryQueryHandler;
 
         public CategoryController(
             CategoryValidator categoryValidator,
-            ICategoryService categoryService)
+            ICategoryCommandHandler categoryCommandHandler,
+            ICategoryQueryHandler categoryQueryHandler)
+
         {
             _categoryValidator = categoryValidator;
-            _categoryService = categoryService;
+            _categoryCommandHandler = categoryCommandHandler;
+            _categoryQueryHandler = categoryQueryHandler;
         }
 
         // GET: /Category
         public async Task<IActionResult> Index()
         {
             var categories =
-                await _categoryService.GetAllAsync();
+                await _categoryQueryHandler.GetAllAsync();
 
             return View(categories);
         }
@@ -50,7 +55,7 @@ namespace ExpenseTracker.Controllers
             {
                 await _categoryValidator.ValidateCategoryInfoInput(request);
 
-                await _categoryService.CreateAsync(request);
+                await _categoryCommandHandler.CreateAsync(request);
 
                 TempData["SuccessMessage"] = CategoryDataMessage.CategoryCreatedSuccess;
 
@@ -72,7 +77,7 @@ namespace ExpenseTracker.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             var category =
-                await _categoryService.GetByIdAsync(id);
+                await _categoryQueryHandler.GetByIdAsync(id);
 
             if (category == null)
                 return NotFound();
@@ -103,7 +108,7 @@ namespace ExpenseTracker.Controllers
             {
                 await _categoryValidator.ValidateCategoryInfoInput(request, id);
 
-                var updated = await _categoryService.UpdateAsync( id, request);
+                var updated = await _categoryCommandHandler.UpdateAsync( id, request);
 
                 if (!updated)
                     return NotFound();
@@ -133,7 +138,7 @@ namespace ExpenseTracker.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var category =
-                await _categoryService.GetByIdAsync(id);
+                await _categoryQueryHandler.GetByIdAsync(id);
 
             if (category == null)
                 return NotFound();
@@ -149,7 +154,7 @@ namespace ExpenseTracker.Controllers
             try
             {
                 var deleted =
-                    await _categoryService.DeleteAsync(id);
+                    await _categoryCommandHandler.DeleteAsync(id);
 
                 if (!deleted)
                     return NotFound();

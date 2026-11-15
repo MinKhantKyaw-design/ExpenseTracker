@@ -1,19 +1,17 @@
-﻿using ExpenseTracker.Common.Constants;
-using ExpenseTracker.Common.Enums;
+﻿using ExpenseTracker.Common.Enums;
 using ExpenseTracker.Database.Context;
-using ExpenseTracker.Database.Models;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
-using ExpenseTracker.Interfaces;
+using ExpenseTracker.Interfaces.Expenses;
 using Microsoft.EntityFrameworkCore;
 
-namespace ExpenseTracker.Services
+namespace ExpenseTracker.Features.Expenses
 {
-    public class ExpenseService : IExpenseService
+    public sealed class ExpenseQueryHandler : IExpenseQueryHandler
     {
         private readonly ExpenseTrackerDBContext _context;
 
-        public ExpenseService(ExpenseTrackerDBContext context)
+        public ExpenseQueryHandler(ExpenseTrackerDBContext context)
         {
             _context = context;
         }
@@ -107,104 +105,6 @@ namespace ExpenseTracker.Services
                     Notes = x.Notes ?? string.Empty
                 })
                 .FirstOrDefaultAsync();
-        }
-
-
-        // Create expense
-        public async Task<ExpenseDto> CreateAsync(
-            ExpenseRequest request)
-        {
-            var expense = new Expense
-            {
-                UserId = request.UserID,
-                CategoryId = request.CategoryID ?? 0,
-                Amount = request.Amount,
-                Date = request.Date,
-                Notes = request.Notes?.Trim(),
-                DelFlg = false
-            };
-
-            _context.Expenses.Add(expense);
-
-            await _context.SaveChangesAsync();
-
-            return (await GetByIdAsync(expense.ExpenseId))!;
-        }
-
-
-        // Update expense
-        public async Task<bool> UpdateAsync(
-            int id,
-            ExpenseRequest request)
-        {
-            // Find expense belonging to current user
-            // and not soft-deleted
-            var expense = await _context.Expenses
-                .FirstOrDefaultAsync(x =>
-                    x.ExpenseId == id &&
-                    x.DelFlg == false);
-
-            if (expense == null)
-            {
-                return false;
-            }
-
-            expense.UserId = request.UserID;
-            expense.CategoryId = request.CategoryID ?? 0;
-            expense.Amount = request.Amount;
-            expense.Date = request.Date;
-            expense.Notes = request.Notes?.Trim();
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-
-
-        // Soft delete expense
-        public async Task<bool> DeleteAsync(int id)
-        {
-            var expense = await _context.Expenses
-                .FirstOrDefaultAsync(x =>
-                    x.ExpenseId == id &&
-                    x.DelFlg == false);
-
-            if (expense == null)
-            {
-                return false;
-            }
-
-            // Soft delete
-            expense.DelFlg = true;
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
-
-
-        // Validate expense data
-        private static void ValidateExpense(
-            ExpenseRequest request)
-        {
-            if (request.Amount <= 0)
-            {
-                throw new ArgumentException(
-                    ExpenseDataMessage.ExpenseLessThanZeroError);
-            }
-
-            if (request.Date == default)
-            {
-                throw new ArgumentException(
-                    ExpenseDataMessage.ExpenseDateRequireError);
-            }
-
-            if (request.Date >
-                DateOnly.FromDateTime(DateTime.Today))
-            {
-                throw new ArgumentException(
-                    ExpenseDataMessage.ExpenseDateInFutureError);
-            }
         }
     }
 }

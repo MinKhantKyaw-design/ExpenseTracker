@@ -1,8 +1,8 @@
 ﻿using ExpenseTracker.DTOs;
 
-namespace ExpenseTracker.Interfaces
+namespace ExpenseTracker.Interfaces.Dashboards
 {
-    public interface IDashboardService
+    public interface IDashboardQueryService
     {
         Task<decimal> GetTodayTotalAsync(int userId);
 

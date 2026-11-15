@@ -1,4 +1,4 @@
-using ExpenseTracker.Interfaces;
+using ExpenseTracker.Interfaces.Dashboards;
 using ExpenseTracker.Models;
 using ExpenseTracker.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -12,11 +12,11 @@ namespace ExpenseTracker.Controllers
     public class HomeController : BaseController
     {
 
-        private readonly IDashboardService _dashboardService;
+        private readonly IDashboardQueryService _dashboardService;
 
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger, IDashboardService dashboardService)
+        public HomeController(ILogger<HomeController> logger, IDashboardQueryService dashboardService)
         {
             _logger = logger;
             _dashboardService = dashboardService;

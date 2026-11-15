@@ -1,6 +1,9 @@
 ﻿using ExpenseTracker.Common.Constants;
 using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.Features.Expenses;
 using ExpenseTracker.Interfaces;
+using ExpenseTracker.Interfaces.Categories;
+using ExpenseTracker.Interfaces.Expenses;
 using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,17 +13,21 @@ namespace ExpenseTracker.Controllers
     [Authorize]
     public class ExpensesController : BaseController
     {
-        private readonly IExpenseService _expenseService;
-        private readonly ICategoryService _categoryService;
+        private readonly IExpenseCommandHandler _expenseCommandHandler;
+
+        private readonly IExpenseQueryHandler _expenseQueryHandler;
+        private readonly ICategoryQueryHandler _categoryQueryHandler;
         private readonly ExpenseValidator _expenseValidator;
 
         public ExpensesController(
-            IExpenseService expenseService,
-            ICategoryService categoryService,
+            IExpenseCommandHandler expenseCommandHandler,
+            IExpenseQueryHandler expenseQueryHandler,
+            ICategoryQueryHandler categoryQueryHandler,
             ExpenseValidator expenseValidator)
         {
-            _expenseService = expenseService;
-            _categoryService = categoryService;
+            _expenseCommandHandler = expenseCommandHandler;
+            _expenseQueryHandler = expenseQueryHandler;
+            _categoryQueryHandler = categoryQueryHandler;
             _expenseValidator = expenseValidator;
         }
 
@@ -29,9 +36,9 @@ namespace ExpenseTracker.Controllers
         {
             request.UserID = GetCurrentUserId();
 
-            var expenses = await _expenseService.GetAllAsync(request);
+            var expenses = await _expenseQueryHandler.GetAllAsync(request);
 
-            ViewBag.Categories = await _categoryService.GetAllAsync();
+            ViewBag.Categories = await _categoryQueryHandler.GetAllAsync();
 
             ViewBag.FromDate = request.FromDate;
             ViewBag.ToDate = request.ToDate;
@@ -46,7 +53,7 @@ namespace ExpenseTracker.Controllers
         public async Task<IActionResult> Create()
         {
             ViewBag.Categories =
-                await _categoryService.GetAllAsync();
+                await _categoryQueryHandler.GetAllAsync();
 
             return View();
         }
@@ -60,7 +67,7 @@ namespace ExpenseTracker.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.Categories =
-                    await _categoryService.GetAllAsync();
+                    await _categoryQueryHandler.GetAllAsync();
 
                 return View(request);
             }
@@ -80,7 +87,7 @@ namespace ExpenseTracker.Controllers
 
                 request.CategoryID = categoryId;
 
-                await _expenseService.CreateAsync(request);
+                await _expenseCommandHandler.CreateAsync(request);
 
                 TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseCreatedSuccess;
 
@@ -93,7 +100,7 @@ namespace ExpenseTracker.Controllers
                     ex.Message);
 
                 ViewBag.Categories =
-                    await _categoryService.GetAllAsync();
+                    await _categoryQueryHandler.GetAllAsync();
 
                 return View(request);
             }
@@ -104,7 +111,7 @@ namespace ExpenseTracker.Controllers
         {
 
             var expense =
-                await _expenseService.GetByIdAsync(id);
+                await _expenseQueryHandler.GetByIdAsync(id);
 
             if (expense == null)
                 return NotFound();
@@ -121,7 +128,7 @@ namespace ExpenseTracker.Controllers
             ViewBag.ExpenseId = expense.ExpenseID;
 
             ViewBag.Categories =
-                await _categoryService.GetAllAsync();
+                await _categoryQueryHandler.GetAllAsync();
 
             return View(request);
         }
@@ -136,7 +143,7 @@ namespace ExpenseTracker.Controllers
                 ViewBag.ExpenseId = expenseID;
 
                 ViewBag.Categories =
-                    await _categoryService.GetAllAsync();
+                    await _categoryQueryHandler.GetAllAsync();
 
                 return View(request);
             }
@@ -154,7 +161,7 @@ namespace ExpenseTracker.Controllers
 
                 request.CategoryID = categoryId;
 
-                var updated = await _expenseService.UpdateAsync(expenseID,request);
+                var updated = await _expenseCommandHandler.UpdateAsync(expenseID,request);
 
                 if (!updated)
                     return NotFound();
@@ -171,7 +178,7 @@ namespace ExpenseTracker.Controllers
 
                 ViewBag.ExpenseId = expenseID;
 
-                ViewBag.Categories = await _categoryService.GetAllAsync();
+                ViewBag.Categories = await _categoryQueryHandler.GetAllAsync();
 
                 return View(request);
             }
@@ -181,7 +188,7 @@ namespace ExpenseTracker.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var expense =
-                await _expenseService.GetByIdAsync(id);
+                await _expenseQueryHandler.GetByIdAsync(id);
 
             if (expense == null)
                 return NotFound();
@@ -199,7 +206,7 @@ namespace ExpenseTracker.Controllers
             try
             {
                 var deleted =
-                    await _expenseService.DeleteAsync(id);
+                    await _expenseCommandHandler.DeleteAsync(id);
 
                 if (!deleted)
                     return NotFound();

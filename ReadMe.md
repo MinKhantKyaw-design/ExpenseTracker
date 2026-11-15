@@ -231,3 +231,27 @@ SignalR
 
 ApexCharts
 
+
+
+## CQRS implementation
+
+This branch uses **manual CQRS** (without MediatR). MVC controllers call dedicated handlers in `ExpenseTracker/Features`.
+
+- `Features/Expenses/Commands`: create, update, and soft-delete expense operations.
+- `Features/Expenses/Queries`: expense list and single-expense reads.
+- `Features/Categories/Commands`: create, update, and soft-delete category operations.
+- `Features/Categories/Queries`: category list and single-category reads.
+- `Features/Dashboard/Queries`: dashboard totals and category summary.
+
+Commands change application state; queries only read data. Handlers use the existing `ExpenseTrackerDBContext`, so no database relationship or schema changes are required for CQRS. Existing Razor views, cookie authentication, DTOs, and validators are retained.
+
+Expense queries and update/delete commands always include the authenticated `userId` in their database predicates. The user ID comes from `BaseController.GetCurrentUserId()` and is not accepted from the browser. Category data remains shared across users, matching the existing database design.
+
+### Adding a feature
+
+1. Add a command handler under the relevant feature's `Commands` folder for a state-changing operation.
+2. Add a query handler under `Queries` for a read-only operation.
+3. Register the handler in `Program.cs` using scoped lifetime.
+4. Inject the handler into the MVC controller and call `HandleAsync`.
+
+No MediatR package is required.

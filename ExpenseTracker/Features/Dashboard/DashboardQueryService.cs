@@ -1,15 +1,15 @@
 ﻿using ExpenseTracker.Database.Context;
 using ExpenseTracker.DTOs;
-using ExpenseTracker.Interfaces;
+using ExpenseTracker.Interfaces.Dashboards;
 using Microsoft.EntityFrameworkCore;
 
-namespace ExpenseTracker.Services
+namespace ExpenseTracker.Features.Dashboard
 {
-    public class DashboardService : IDashboardService
+    public class DashboardQueryService : IDashboardQueryService
     {
         private readonly ExpenseTrackerDBContext _context;
 
-        public DashboardService(ExpenseTrackerDBContext context)
+        public DashboardQueryService(ExpenseTrackerDBContext context)
         {
             _context = context;
         }

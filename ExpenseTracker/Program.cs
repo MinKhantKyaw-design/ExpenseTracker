@@ -1,7 +1,11 @@
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
-using ExpenseTracker.Interfaces;
-using ExpenseTracker.Services;
+using ExpenseTracker.Features.Categories;
+using ExpenseTracker.Features.Dashboard;
+using ExpenseTracker.Features.Expenses;
+using ExpenseTracker.Interfaces.Categories;
+using ExpenseTracker.Interfaces.Dashboards;
+using ExpenseTracker.Interfaces.Expenses;
 using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -12,13 +16,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddScoped<ICategoryService, CategoryService>();
+// builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryCommandHandler, CategoryCommandHandler>();
+builder.Services.AddScoped<ICategoryQueryHandler, CategoryQueryHandler>();
 builder.Services.AddScoped<CategoryValidator>();
 
-builder.Services.AddScoped<IExpenseService, ExpenseService>();
+//builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IExpenseCommandHandler, ExpenseCommandHandler>();
+builder.Services.AddScoped<IExpenseQueryHandler, ExpenseQueryHandler>();
 builder.Services.AddScoped<ExpenseValidator>();
 
-builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IDashboardQueryService, DashboardQueryService>();
 
 // For Password Hashing and Authentication
 builder.Services.AddScoped<IPasswordHasher<User>,PasswordHasher<User>>();

@@ -3,44 +3,19 @@ using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
-using ExpenseTracker.Interfaces;
+using ExpenseTracker.Interfaces.Categories;
 using Microsoft.EntityFrameworkCore;
 
-namespace ExpenseTracker.Services
+namespace ExpenseTracker.Features.Categories
 {
-    public class CategoryService : ICategoryService
+    public sealed class CategoryCommandHandler : ICategoryCommandHandler
     {
+
         private readonly ExpenseTrackerDBContext _context;
 
-        public CategoryService(ExpenseTrackerDBContext context)
+        public CategoryCommandHandler(ExpenseTrackerDBContext context)
         {
             _context = context;
-        }
-
-        public async Task<IEnumerable<CategoryDto>> GetAllAsync()
-        {
-            return await _context.Categories
-                .Where(x => x.DelFlg == false)
-                .Select(x => new CategoryDto
-                {
-                    CategoryID = x.CategoryId,
-                    Name = x.Name,
-                    Description = x.Description ?? string.Empty
-                })
-                .ToListAsync();
-        }
-
-        public async Task<CategoryDto?> GetByIdAsync(int id) // changed to nullable
-        {
-            return await _context.Categories
-                .Where(x => x.CategoryId == id && x.DelFlg == false)
-                .Select(x => new CategoryDto
-                {
-                    CategoryID = x.CategoryId,
-                    Name = x.Name,
-                    Description = x.Description ?? string.Empty
-                })
-                .FirstOrDefaultAsync();
         }
 
         public async Task<CategoryDto> CreateAsync(CategoryRequest request)
