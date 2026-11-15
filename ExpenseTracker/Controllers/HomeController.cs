@@ -1,57 +1,33 @@
-using ExpenseTracker.Interfaces.Dashboards;
+using System.Diagnostics;
+using ExpenseTracker.Features.Dashboard.Queries;
 using ExpenseTracker.Models;
-using ExpenseTracker.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
-namespace ExpenseTracker.Controllers
+namespace ExpenseTracker.Controllers;
+
+[Authorize]
+public class HomeController : BaseController
 {
-    [Authorize]
-    public class HomeController : BaseController
+    private readonly GetDashboardQueryHandler _getDashboard;
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(GetDashboardQueryHandler getDashboard, ILogger<HomeController> logger)
     {
+        _getDashboard = getDashboard;
+        _logger = logger;
+    }
 
-        private readonly IDashboardQueryService _dashboardService;
+    public async Task<IActionResult> Index()
+    {
+        var model = await _getDashboard.HandleAsync(GetCurrentUserId());
+        return View(model);
+    }
 
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger, IDashboardQueryService dashboardService)
-        {
-            _logger = logger;
-            _dashboardService = dashboardService;
-        }
-
-        public async Task<IActionResult> Index()
-        {
-            int userId = GetCurrentUserId();
-
-            var model = new DashboardViewModel
-            {
-                TodayTotal =
-                    await _dashboardService
-                        .GetTodayTotalAsync(userId),
-
-                WeekTotal =
-                    await _dashboardService
-                        .GetThisWeekTotalAsync(userId),
-
-                MonthTotal =
-                    await _dashboardService
-                        .GetThisMonthTotalAsync(userId),
-
-                CategorySummary =
-                    await _dashboardService
-                        .GetCategorySummaryAsync(userId)
-            };
-
-            return View(model);
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [AllowAnonymous]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

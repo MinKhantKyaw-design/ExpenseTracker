@@ -1,4 +1,4 @@
-﻿using ExpenseTracker.Common.Enums;
+using ExpenseTracker.Common.Enums;
 
 namespace ExpenseTracker.DTOs.Requests
 {
@@ -7,8 +7,6 @@ namespace ExpenseTracker.DTOs.Requests
         public DateOnly? FromDate { get; set; }
 
         public DateOnly? ToDate { get; set; }
-
-        public int UserID { get; set; } = 0; // Implement for later
 
         public int? CategoryID { get; set; }
 
