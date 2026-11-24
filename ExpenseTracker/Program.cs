@@ -17,25 +17,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 
-
-
-// CQRS command handlers
-
-
-builder.Services.AddScoped<CreateExpenseCommandHandler>();
-builder.Services.AddScoped<UpdateExpenseCommandHandler>();
-builder.Services.AddScoped<DeleteExpenseCommandHandler>();
-
-////category
+////It can only one time create for both expense, category and Dashboard command handlers because they are in the same assembly. So, we can register them together.
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateCategoryCommand).Assembly));
 
-// CQRS query handlers
-builder.Services.AddScoped<GetExpenseListQueryHandler>();
-builder.Services.AddScoped<GetExpenseByIdQueryHandler>();
-
-builder.Services.AddScoped<GetCategoryListQueryHandler>();
-builder.Services.AddScoped<GetCategoryByIdQueryHandler>();
-builder.Services.AddScoped<GetDashboardQueryHandler>();
 
 // Existing validators are used by command handlers.
 builder.Services.AddScoped<CategoryValidator>();

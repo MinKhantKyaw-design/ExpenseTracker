@@ -4,11 +4,12 @@ using ExpenseTracker.Database.Models;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Validators;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Expenses.Commands;
 
-public sealed class CreateExpenseCommandHandler
+public sealed class CreateExpenseCommandHandler : IRequestHandler<CreateExpenseCommand, ExpenseDto>
 {
     private readonly ExpenseTrackerDBContext _context;
     private readonly ExpenseValidator _validator;
@@ -19,8 +20,10 @@ public sealed class CreateExpenseCommandHandler
         _validator = validator;
     }
 
-    public async Task<ExpenseDto> HandleAsync(int userId, ExpenseRequest request)
+    public async Task<ExpenseDto> Handle(CreateExpenseCommand command, CancellationToken cancellationToken)
     {
+        int userId = command.UserId;
+        ExpenseRequest request = command.Request;
         request.UserID = userId;
         await _validator.ValidateInputAndUserExist(request);
         request.CategoryID = await _validator.ValidateCategoryID(request.CategoryID);
@@ -39,7 +42,7 @@ public sealed class CreateExpenseCommandHandler
         };
 
         _context.Expenses.Add(expense);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
 
         return await _context.Expenses
             .Where(x => x.ExpenseId == expense.ExpenseId && x.UserId == userId && !x.DelFlg)
@@ -53,6 +56,6 @@ public sealed class CreateExpenseCommandHandler
                 Date = x.Date,
                 Notes = x.Notes ?? string.Empty
             })
-            .SingleAsync();
+            .SingleAsync(cancellationToken);
     }
 }

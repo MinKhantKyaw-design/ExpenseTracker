@@ -19,10 +19,10 @@ public sealed class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByI
                 CategoryID = x.CategoryId,
                 Name = x.Name,
                 Description = x.Description ?? string.Empty
-            }).FirstOrDefaultAsync();
+            }).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public Task<CategoryDto?> HandleAsync(int id)
+    public Task<CategoryDto?> HandleAsync(int id, CancellationToken cancellationToken = default)
     {
         return _context.Categories.AsNoTracking()
             .Where(x => x.CategoryId == id && !x.DelFlg)
@@ -31,6 +31,6 @@ public sealed class GetCategoryByIdQueryHandler : IRequestHandler<GetCategoryByI
                 CategoryID = x.CategoryId,
                 Name = x.Name,
                 Description = x.Description ?? string.Empty
-            }).FirstOrDefaultAsync();
+            }).FirstOrDefaultAsync(cancellationToken);
     }
 }

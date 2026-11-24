@@ -1,18 +1,19 @@
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.DTOs;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Expenses.Queries;
 
-public sealed class GetExpenseByIdQueryHandler
+public sealed class GetExpenseByIdQueryHandler : IRequestHandler<GetExpenseByIdQuery, ExpenseDto?>
 {
     private readonly ExpenseTrackerDBContext _context;
     public GetExpenseByIdQueryHandler(ExpenseTrackerDBContext context) => _context = context;
 
-    public Task<ExpenseDto?> HandleAsync(int expenseId, int userId)
+    public Task<ExpenseDto?> Handle(GetExpenseByIdQuery query, CancellationToken cancellationToken)
     {
         return _context.Expenses.AsNoTracking()
-            .Where(x => x.ExpenseId == expenseId && x.UserId == userId && !x.DelFlg)
+            .Where(x => x.ExpenseId == query.ExpenseId && x.UserId == query.UserId && !x.DelFlg)
             .Select(x => new ExpenseDto
             {
                 ExpenseID = x.ExpenseId,
@@ -23,6 +24,6 @@ public sealed class GetExpenseByIdQueryHandler
                 Date = x.Date,
                 Notes = x.Notes ?? string.Empty
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
     }
 }

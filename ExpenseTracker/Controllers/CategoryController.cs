@@ -15,8 +15,7 @@ public class CategoryController : BaseController
     private readonly ISender _sender;
 
     public CategoryController(
-        ISender sender,
-        GetCategoryByIdQueryHandler getById)
+        ISender sender)
     {
         _sender = sender;
     }

@@ -14,32 +14,16 @@ public class ExpensesController : BaseController
 {
 
     private readonly ISender _sender;
-    private readonly GetExpenseListQueryHandler _getList;
-    private readonly GetExpenseByIdQueryHandler _getById;
-    private readonly CreateExpenseCommandHandler _create;
-    private readonly UpdateExpenseCommandHandler _update;
-    private readonly DeleteExpenseCommandHandler _delete;
 
-    public ExpensesController(
-        ISender sender,
-        GetExpenseListQueryHandler getList,
-        GetExpenseByIdQueryHandler getById,
-        CreateExpenseCommandHandler create,
-        UpdateExpenseCommandHandler update,
-        DeleteExpenseCommandHandler delete)
+    public ExpensesController(ISender sender)
     {
         _sender = sender;
-        _getList = getList;
-        _getById = getById;
-        _create = create;
-        _update = update;
-        _delete = delete;
     }
 
     public async Task<IActionResult> Index(GetExpenseListRequest request)
     {
         int userId = GetCurrentUserId();
-        var expenses = await _getList.HandleAsync(userId, request);
+        var expenses = await _sender.Send(new GetExpenseListQuery(userId, request));
         ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
         ViewBag.FromDate = request.FromDate;
         ViewBag.ToDate = request.ToDate;
@@ -68,7 +52,7 @@ public class ExpensesController : BaseController
 
         try
         {
-            await _create.HandleAsync(GetCurrentUserId(), request);
+            await _sender.Send(new CreateExpenseCommand(GetCurrentUserId(), request));
             TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseCreatedSuccess;
             return RedirectToAction(nameof(Index));
         }
@@ -83,7 +67,7 @@ public class ExpensesController : BaseController
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var expense = await _getById.HandleAsync(id, GetCurrentUserId());
+        var expense = await _sender.Send(new GetExpenseByIdQuery(id, GetCurrentUserId()));
         if (expense == null) return NotFound();
 
         var request = new ExpenseRequest
@@ -113,7 +97,7 @@ public class ExpensesController : BaseController
 
         try
         {
-            bool updated = await _update.HandleAsync(expenseID, GetCurrentUserId(), request);
+            bool updated = await _sender.Send(new UpdateExpenseCommand(expenseID, GetCurrentUserId(), request));
             if (!updated) return NotFound();
 
             TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseEditedSuccess;
@@ -131,7 +115,7 @@ public class ExpensesController : BaseController
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var expense = await _getById.HandleAsync(id, GetCurrentUserId());
+        var expense = await _sender.Send(new GetExpenseByIdQuery(id, GetCurrentUserId()));
         if (expense == null) return NotFound();
         return View(expense);
     }
@@ -140,7 +124,7 @@ public class ExpensesController : BaseController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        bool deleted = await _delete.HandleAsync(id, GetCurrentUserId());
+        bool deleted = await _sender.Send(new DeleteExpenseCommand(id, GetCurrentUserId()));
         if (!deleted) return NotFound();
 
         TempData["SuccessMessage"] = ExpenseDataMessage.ExpenseDeletedSuccess;

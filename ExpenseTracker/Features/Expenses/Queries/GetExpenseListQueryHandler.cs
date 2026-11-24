@@ -2,17 +2,20 @@ using ExpenseTracker.Common.Enums;
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Expenses.Queries;
 
-public sealed class GetExpenseListQueryHandler
+public sealed class GetExpenseListQueryHandler : IRequestHandler<GetExpenseListQuery, IEnumerable<ExpenseDto>>
 {
     private readonly ExpenseTrackerDBContext _context;
     public GetExpenseListQueryHandler(ExpenseTrackerDBContext context) => _context = context;
 
-    public async Task<IEnumerable<ExpenseDto>> HandleAsync(int userId, GetExpenseListRequest request)
+    public async Task<IEnumerable<ExpenseDto>> Handle(GetExpenseListQuery queryRequest, CancellationToken cancellationToken)
     {
+        int userId = queryRequest.UserId;
+        GetExpenseListRequest request = queryRequest.Request;
         var query = _context.Expenses
             .AsNoTracking()
             .Where(x => x.UserId == userId && !x.DelFlg);
@@ -43,6 +46,6 @@ public sealed class GetExpenseListQueryHandler
             Amount = x.Amount,
             Date = x.Date,
             Notes = x.Notes ?? string.Empty
-        }).ToListAsync();
+        }).ToListAsync(cancellationToken);
     }
 }

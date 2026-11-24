@@ -21,25 +21,28 @@ public sealed class UpdateCategoryCommandHandler : IRequestHandler<UpdateCategor
     {
         await _validator.ValidateCategoryInfoInput(command.Request, command.Id);
         var category = await _context.Categories
-            .FirstOrDefaultAsync(x => x.CategoryId == command.Id && !x.DelFlg);
+            .FirstOrDefaultAsync(x => x.CategoryId == command.Id && !x.DelFlg, cancellationToken);
         if (category == null) return false;
 
         category.Name = command.Request.Name.Trim();
         category.Description = command.Request.Description?.Trim();
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 
-    public async Task<bool> HandleAsync(int id, CategoryRequest request)
+    public async Task<bool> HandleAsync(
+        int id,
+        CategoryRequest request,
+        CancellationToken cancellationToken = default)
     {
         await _validator.ValidateCategoryInfoInput(request, id);
         var category = await _context.Categories
-            .FirstOrDefaultAsync(x => x.CategoryId == id && !x.DelFlg);
+            .FirstOrDefaultAsync(x => x.CategoryId == id && !x.DelFlg, cancellationToken);
         if (category == null) return false;
 
         category.Name = request.Name.Trim();
         category.Description = request.Description?.Trim();
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 }

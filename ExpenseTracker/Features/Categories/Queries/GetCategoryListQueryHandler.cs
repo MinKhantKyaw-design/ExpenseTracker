@@ -20,7 +20,7 @@ public sealed class GetCategoryListQueryHandler : IRequestHandler<GetCategoryLis
                CategoryID = x.CategoryId,
                Name = x.Name,
                Description = x.Description ?? string.Empty
-           }).ToListAsync();
+            }).ToListAsync(cancellationToken);
     }
 
     //public async Task<IEnumerable<CategoryDto>> HandleAsync()

@@ -13,38 +13,38 @@ public sealed class DeleteCategoryCommandHandler : IRequestHandler<DeleteCategor
     public async Task<bool> Handle(DeleteCategoryCommand command, CancellationToken cancellationToken)
     {
         var category = await _context.Categories
-            .FirstOrDefaultAsync(x => x.CategoryId == command.Id && !x.DelFlg);
+            .FirstOrDefaultAsync(x => x.CategoryId == command.Id && !x.DelFlg, cancellationToken);
         if (category == null) return false;
 
         if (category.Name == "Miscellaneous")
             throw new InvalidOperationException(CategoryDataMessage.MiscellaneousCategoryDeleteError);
 
         bool hasExpenses = await _context.Expenses
-            .AnyAsync(x => x.CategoryId == command.Id && !x.DelFlg);
+            .AnyAsync(x => x.CategoryId == command.Id && !x.DelFlg, cancellationToken);
         if (hasExpenses)
             throw new InvalidOperationException(CategoryDataMessage.DeleteHasExpenseError);
 
         category.DelFlg = true;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 
-    public async Task<bool> HandleAsync(int id)
+    public async Task<bool> HandleAsync(int id, CancellationToken cancellationToken = default)
     {
         var category = await _context.Categories
-            .FirstOrDefaultAsync(x => x.CategoryId == id && !x.DelFlg);
+            .FirstOrDefaultAsync(x => x.CategoryId == id && !x.DelFlg, cancellationToken);
         if (category == null) return false;
 
         if (category.Name == "Miscellaneous")
             throw new InvalidOperationException(CategoryDataMessage.MiscellaneousCategoryDeleteError);
 
         bool hasExpenses = await _context.Expenses
-            .AnyAsync(x => x.CategoryId == id && !x.DelFlg);
+            .AnyAsync(x => x.CategoryId == id && !x.DelFlg, cancellationToken);
         if (hasExpenses)
             throw new InvalidOperationException(CategoryDataMessage.DeleteHasExpenseError);
 
         category.DelFlg = true;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
 }

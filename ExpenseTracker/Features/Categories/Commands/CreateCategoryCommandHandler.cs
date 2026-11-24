@@ -4,7 +4,6 @@ using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Validators;
 using MediatR;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ExpenseTracker.Features.Categories.Commands;
 
