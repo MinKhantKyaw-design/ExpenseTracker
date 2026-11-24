@@ -1,18 +1,19 @@
-using System.Diagnostics;
-using ExpenseTracker.Features.Dashboard.Queries;
+using ExpenseTracker.Interfaces;
 using ExpenseTracker.Models;
+using ExpenseTracker.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace ExpenseTracker.Controllers;
 
 [Authorize]
 public class HomeController : BaseController
 {
-    private readonly GetDashboardQueryHandler _getDashboard;
+    private readonly IQueryHandler<int, DashboardViewModel> _getDashboard;
     private readonly ILogger<HomeController> _logger;
 
-    public HomeController(GetDashboardQueryHandler getDashboard, ILogger<HomeController> logger)
+    public HomeController(IQueryHandler<int, DashboardViewModel> getDashboard, ILogger<HomeController> logger)
     {
         _getDashboard = getDashboard;
         _logger = logger;

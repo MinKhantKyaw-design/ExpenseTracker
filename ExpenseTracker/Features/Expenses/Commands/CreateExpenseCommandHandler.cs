@@ -3,12 +3,13 @@ using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.Interfaces;
 using ExpenseTracker.Validators;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Expenses.Commands;
 
-public sealed class CreateExpenseCommandHandler
+public sealed class CreateExpenseCommandHandler : ICommandHandler<(int userId, ExpenseRequest request), ExpenseDto>
 {
     private readonly ExpenseTrackerDBContext _context;
     private readonly ExpenseValidator _validator;
@@ -19,22 +20,22 @@ public sealed class CreateExpenseCommandHandler
         _validator = validator;
     }
 
-    public async Task<ExpenseDto> HandleAsync(int userId, ExpenseRequest request)
+    public async Task<ExpenseDto> HandleAsync((int userId, ExpenseRequest request) command)
     {
-        request.UserID = userId;
-        await _validator.ValidateInputAndUserExist(request);
-        request.CategoryID = await _validator.ValidateCategoryID(request.CategoryID);
+        command.request.UserID = command.userId;
+        await _validator.ValidateInputAndUserExist(command.request);
+        command.request.CategoryID = await _validator.ValidateCategoryID(command.request.CategoryID);
 
-        if (request.CategoryID is null or 0)
+        if (command.request.CategoryID is null or 0)
             throw new ArgumentException(ExpenseDataMessage.CategoryDoesNotExistError);
 
         var expense = new Expense
         {
-            UserId = userId,
-            CategoryId = request.CategoryID.Value,
-            Amount = request.Amount,
-            Date = request.Date,
-            Notes = request.Notes?.Trim(),
+            UserId = command.userId,
+            CategoryId = command.request.CategoryID.Value,
+            Amount = command.request.Amount,
+            Date = command.request.Date,
+            Notes = command.request.Notes?.Trim(),
             DelFlg = false
         };
 
@@ -42,7 +43,7 @@ public sealed class CreateExpenseCommandHandler
         await _context.SaveChangesAsync();
 
         return await _context.Expenses
-            .Where(x => x.ExpenseId == expense.ExpenseId && x.UserId == userId && !x.DelFlg)
+            .Where(x => x.ExpenseId == expense.ExpenseId && x.UserId == command.userId && !x.DelFlg)
             .Select(x => new ExpenseDto
             {
                 ExpenseID = x.ExpenseId,

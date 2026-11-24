@@ -1,10 +1,11 @@
 using ExpenseTracker.Common.Constants;
 using ExpenseTracker.Database.Context;
+using ExpenseTracker.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Categories.Commands;
 
-public sealed class DeleteCategoryCommandHandler
+public sealed class DeleteCategoryCommandHandler : ICommandHandler<int, bool>
 {
     private readonly ExpenseTrackerDBContext _context;
     public DeleteCategoryCommandHandler(ExpenseTrackerDBContext context) => _context = context;

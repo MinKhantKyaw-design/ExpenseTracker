@@ -1,10 +1,11 @@
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.DTOs;
+using ExpenseTracker.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Categories.Queries;
 
-public sealed class GetCategoryByIdQueryHandler
+public sealed class GetCategoryByIdQueryHandler : IQueryHandler<int, CategoryDto?>
 {
     private readonly ExpenseTrackerDBContext _context;
     public GetCategoryByIdQueryHandler(ExpenseTrackerDBContext context) => _context = context;

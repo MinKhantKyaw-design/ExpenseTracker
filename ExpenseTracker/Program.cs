@@ -9,6 +9,10 @@ using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ExpenseTracker.Interfaces;
+using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.DTOs;
+using ExpenseTracker.ViewModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,19 +20,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // CQRS command handlers
-builder.Services.AddScoped<CreateExpenseCommandHandler>();
-builder.Services.AddScoped<UpdateExpenseCommandHandler>();
-builder.Services.AddScoped<DeleteExpenseCommandHandler>();
-builder.Services.AddScoped<CreateCategoryCommandHandler>();
-builder.Services.AddScoped<UpdateCategoryCommandHandler>();
-builder.Services.AddScoped<DeleteCategoryCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<(int, ExpenseRequest), ExpenseDto>,CreateExpenseCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<(int expenseId, int userId, ExpenseRequest request), bool>, UpdateExpenseCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<(int expenseId, int userId), bool>, DeleteExpenseCommandHandler>();
+
+builder.Services.AddScoped<ICommandHandler<CategoryRequest, CategoryDto>,CreateCategoryCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<(int, CategoryRequest), bool>,UpdateCategoryCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<int, bool>,DeleteCategoryCommandHandler>();
 
 // CQRS query handlers
-builder.Services.AddScoped<GetExpenseListQueryHandler>();
-builder.Services.AddScoped<GetExpenseByIdQueryHandler>();
-builder.Services.AddScoped<GetCategoryListQueryHandler>();
-builder.Services.AddScoped<GetCategoryByIdQueryHandler>();
-builder.Services.AddScoped<GetDashboardQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<(int userId, GetExpenseListRequest request), IEnumerable<ExpenseDto>>, GetExpenseListQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<(int expenseId, int userId), ExpenseDto?>, GetExpenseByIdQueryHandler>();
+
+builder.Services.AddScoped<IQueryListHandler<IEnumerable<CategoryDto>>,GetCategoryListQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<int, CategoryDto?>, GetCategoryByIdQueryHandler>();
+
+builder.Services.AddScoped<IQueryHandler<int, DashboardViewModel>,GetDashboardQueryHandler>();
 
 // Existing validators are used by command handlers.
 builder.Services.AddScoped<CategoryValidator>();

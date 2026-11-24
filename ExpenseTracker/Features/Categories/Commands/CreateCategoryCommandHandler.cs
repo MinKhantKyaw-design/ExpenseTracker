@@ -2,11 +2,12 @@ using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.Interfaces;
 using ExpenseTracker.Validators;
 
 namespace ExpenseTracker.Features.Categories.Commands;
 
-public sealed class CreateCategoryCommandHandler
+public sealed class CreateCategoryCommandHandler : ICommandHandler<CategoryRequest, CategoryDto>
 {
     private readonly ExpenseTrackerDBContext _context;
     private readonly CategoryValidator _validator;

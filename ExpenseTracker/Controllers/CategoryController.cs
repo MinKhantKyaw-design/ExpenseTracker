@@ -1,7 +1,9 @@
 using ExpenseTracker.Common.Constants;
+using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Features.Categories.Commands;
 using ExpenseTracker.Features.Categories.Queries;
+using ExpenseTracker.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,27 +12,28 @@ namespace ExpenseTracker.Controllers;
 [Authorize]
 public class CategoryController : BaseController
 {
-    private readonly GetCategoryListQueryHandler _getList;
-    private readonly GetCategoryByIdQueryHandler _getById;
-    private readonly CreateCategoryCommandHandler _create;
-    private readonly UpdateCategoryCommandHandler _update;
-    private readonly DeleteCategoryCommandHandler _delete;
+    private readonly IQueryListHandler<IEnumerable<CategoryDto>> _getCategoryList;
+
+    private readonly IQueryHandler<int, CategoryDto?> _getCategoryById;
+    private readonly ICommandHandler<CategoryRequest, CategoryDto> _createCategory;
+    private readonly ICommandHandler<(int, CategoryRequest), bool> _updateCategory;
+    private readonly ICommandHandler<int, bool> _deleteCategory;
 
     public CategoryController(
-        GetCategoryListQueryHandler getList,
-        GetCategoryByIdQueryHandler getById,
-        CreateCategoryCommandHandler create,
-        UpdateCategoryCommandHandler update,
-        DeleteCategoryCommandHandler delete)
+        IQueryListHandler<IEnumerable<CategoryDto>> getList,
+        IQueryHandler<int, CategoryDto?> getById,
+        ICommandHandler<CategoryRequest, CategoryDto> create,
+        ICommandHandler<(int, CategoryRequest), bool> update,
+        ICommandHandler<int, bool> delete)
     {
-        _getList = getList;
-        _getById = getById;
-        _create = create;
-        _update = update;
-        _delete = delete;
+        _getCategoryList = getList;
+        _getCategoryById = getById;
+        _createCategory = create;
+        _updateCategory = update;
+        _deleteCategory = delete;
     }
 
-    public async Task<IActionResult> Index() => View(await _getList.HandleAsync());
+    public async Task<IActionResult> Index() => View(await _getCategoryList.HandleListAsync());
 
     [HttpGet]
     public IActionResult Create() => View();
@@ -42,7 +45,7 @@ public class CategoryController : BaseController
         if (!ModelState.IsValid) return View(request);
         try
         {
-            await _create.HandleAsync(request);
+            await _createCategory.HandleAsync(request);
             TempData["SuccessMessage"] = CategoryDataMessage.CategoryCreatedSuccess;
             return RedirectToAction(nameof(Index));
         }
@@ -61,7 +64,7 @@ public class CategoryController : BaseController
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var category = await _getById.HandleAsync(id);
+        var category = await _getCategoryById.HandleAsync(id);
         if (category == null) return NotFound();
         ViewBag.CategoryId = category.CategoryID;
         return View(new CategoryRequest { Name = category.Name, Description = category.Description });
@@ -78,7 +81,7 @@ public class CategoryController : BaseController
         }
         try
         {
-            bool updated = await _update.HandleAsync(id, request);
+            bool updated = await _updateCategory.HandleAsync((id, request));
             if (!updated) return NotFound();
             TempData["SuccessMessage"] = CategoryDataMessage.CategoryEditedSuccess;
             return RedirectToAction(nameof(Index));
@@ -100,7 +103,7 @@ public class CategoryController : BaseController
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var category = await _getById.HandleAsync(id);
+        var category = await _getCategoryById.HandleAsync(id);
         if (category == null) return NotFound();
         return View(category);
     }
@@ -111,7 +114,7 @@ public class CategoryController : BaseController
     {
         try
         {
-            bool deleted = await _delete.HandleAsync(id);
+            bool deleted = await _deleteCategory.HandleAsync(id);
             if (!deleted) return NotFound();
             TempData["SuccessMessage"] = CategoryDataMessage.CategoryDeletedSuccess;
         }

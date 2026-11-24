@@ -2,31 +2,32 @@ using ExpenseTracker.Common.Enums;
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.DTOs;
 using ExpenseTracker.DTOs.Requests;
+using ExpenseTracker.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Expenses.Queries;
 
-public sealed class GetExpenseListQueryHandler
+public sealed class GetExpenseListQueryHandler : IQueryHandler<(int userId, GetExpenseListRequest request),IEnumerable<ExpenseDto>>
 {
     private readonly ExpenseTrackerDBContext _context;
     public GetExpenseListQueryHandler(ExpenseTrackerDBContext context) => _context = context;
 
-    public async Task<IEnumerable<ExpenseDto>> HandleAsync(int userId, GetExpenseListRequest request)
+    public async Task<IEnumerable<ExpenseDto>> HandleAsync((int userId, GetExpenseListRequest request) command)
     {
         var query = _context.Expenses
             .AsNoTracking()
-            .Where(x => x.UserId == userId && !x.DelFlg);
+            .Where(x => x.UserId == command.userId && !x.DelFlg);
 
-        if (request.FromDate.HasValue)
-            query = query.Where(x => x.Date >= request.FromDate.Value);
+        if (command.request.FromDate.HasValue)
+            query = query.Where(x => x.Date >= command.request.FromDate.Value);
 
-        if (request.ToDate.HasValue)
-            query = query.Where(x => x.Date <= request.ToDate.Value);
+        if (command.request.ToDate.HasValue)
+            query = query.Where(x => x.Date <= command.request.ToDate.Value);
 
-        if (request.CategoryID.HasValue)
-            query = query.Where(x => x.CategoryId == request.CategoryID.Value);
+        if (command.request.CategoryID.HasValue)
+            query = query.Where(x => x.CategoryId == command.request.CategoryID.Value);
 
-        query = (request.SortBy, request.SortDirection) switch
+        query = (command.request.SortBy, command.request.SortDirection) switch
         {
             (eExpenseListSortBy.SortByAmount, eSortOrder.Ascending) => query.OrderBy(x => x.Amount),
             (eExpenseListSortBy.SortByAmount, _) => query.OrderByDescending(x => x.Amount),

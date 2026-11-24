@@ -1,11 +1,12 @@
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.DTOs;
+using ExpenseTracker.Interfaces;
 using ExpenseTracker.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Features.Dashboard.Queries;
 
-public sealed class GetDashboardQueryHandler
+public sealed class GetDashboardQueryHandler : IQueryHandler<int, DashboardViewModel>
 {
     private readonly ExpenseTrackerDBContext _context;
     public GetDashboardQueryHandler(ExpenseTrackerDBContext context) => _context = context;
