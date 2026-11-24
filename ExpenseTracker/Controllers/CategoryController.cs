@@ -1,174 +1,124 @@
-﻿using ExpenseTracker.Common.Constants;
+using ExpenseTracker.Common.Constants;
 using ExpenseTracker.DTOs.Requests;
-using ExpenseTracker.Interfaces.Categories;
-using ExpenseTracker.Validators;
+using ExpenseTracker.Features.Categories.Commands;
+using ExpenseTracker.Features.Categories.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ExpenseTracker.Controllers
+namespace ExpenseTracker.Controllers;
+
+[Authorize]
+public class CategoryController : BaseController
 {
-    [Authorize]
-    public class CategoryController : BaseController
+    private readonly GetCategoryListQueryHandler _getList;
+    private readonly GetCategoryByIdQueryHandler _getById;
+    private readonly CreateCategoryCommandHandler _create;
+    private readonly UpdateCategoryCommandHandler _update;
+    private readonly DeleteCategoryCommandHandler _delete;
+
+    public CategoryController(
+        GetCategoryListQueryHandler getList,
+        GetCategoryByIdQueryHandler getById,
+        CreateCategoryCommandHandler create,
+        UpdateCategoryCommandHandler update,
+        DeleteCategoryCommandHandler delete)
     {
-        private readonly CategoryValidator _categoryValidator;
-        private readonly ICategoryCommandHandler _categoryCommandHandler;
+        _getList = getList;
+        _getById = getById;
+        _create = create;
+        _update = update;
+        _delete = delete;
+    }
 
-        private readonly ICategoryQueryHandler _categoryQueryHandler;
+    public async Task<IActionResult> Index() => View(await _getList.HandleAsync());
 
-        public CategoryController(
-            CategoryValidator categoryValidator,
-            ICategoryCommandHandler categoryCommandHandler,
-            ICategoryQueryHandler categoryQueryHandler)
+    [HttpGet]
+    public IActionResult Create() => View();
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CategoryRequest request)
+    {
+        if (!ModelState.IsValid) return View(request);
+        try
         {
-            _categoryValidator = categoryValidator;
-            _categoryCommandHandler = categoryCommandHandler;
-            _categoryQueryHandler = categoryQueryHandler;
+            await _create.HandleAsync(request);
+            TempData["SuccessMessage"] = CategoryDataMessage.CategoryCreatedSuccess;
+            return RedirectToAction(nameof(Index));
         }
-
-        // GET: /Category
-        public async Task<IActionResult> Index()
+        catch (ArgumentException ex)
         {
-            var categories =
-                await _categoryQueryHandler.GetAllAsync();
-
-            return View(categories);
-        }
-
-        // GET: /Category/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: /Category/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CategoryRequest request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(request);
-            }
-
-            try
-            {
-                await _categoryValidator.ValidateCategoryInfoInput(request);
-
-                await _categoryCommandHandler.CreateAsync(request);
-
-                TempData["SuccessMessage"] = CategoryDataMessage.CategoryCreatedSuccess;
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (ArgumentException ex)
-            {
-                ModelState.AddModelError("Name", ex.Message);
-                return View(request);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("Name", ex.Message);
-                return View(request);
-            }
-        }
-
-        // GET: /Category/Edit/5
-        public async Task<IActionResult> Edit(int id)
-        {
-            var category =
-                await _categoryQueryHandler.GetByIdAsync(id);
-
-            if (category == null)
-                return NotFound();
-
-            var request = new CategoryRequest
-            {
-                Name = category.Name,
-                Description = category.Description
-            };
-
-            ViewBag.CategoryId = category.CategoryID;
-
+            ModelState.AddModelError("Name", ex.Message);
             return View(request);
         }
-
-        // POST: /Category/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit( int id, CategoryRequest request )
+        catch (InvalidOperationException ex)
         {
-            if (!ModelState.IsValid)
-            {
-                ViewBag.CategoryId = id;
-                return View(request);
-            }
-
-            try
-            {
-                await _categoryValidator.ValidateCategoryInfoInput(request, id);
-
-                var updated = await _categoryCommandHandler.UpdateAsync( id, request);
-
-                if (!updated)
-                    return NotFound();
-
-                TempData["SuccessMessage"] = CategoryDataMessage.CategoryEditedSuccess;
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (ArgumentException ex)
-            {
-                ModelState.AddModelError(
-                    "Name",
-                    ex.Message);
-
-                ViewBag.CategoryId = id;
-
-                return View(request);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("Name", ex.Message);
-                return View(request);
-            }
+            ModelState.AddModelError("Name", ex.Message);
+            return View(request);
         }
+    }
 
-        // GET: /Category/Delete/5
-        public async Task<IActionResult> Delete(int id)
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var category = await _getById.HandleAsync(id);
+        if (category == null) return NotFound();
+        ViewBag.CategoryId = category.CategoryID;
+        return View(new CategoryRequest { Name = category.Name, Description = category.Description });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, CategoryRequest request)
+    {
+        if (!ModelState.IsValid)
         {
-            var category =
-                await _categoryQueryHandler.GetByIdAsync(id);
-
-            if (category == null)
-                return NotFound();
-
-            return View(category);
+            ViewBag.CategoryId = id;
+            return View(request);
         }
-
-        // POST: /Category/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        try
         {
-            try
-            {
-                var deleted =
-                    await _categoryCommandHandler.DeleteAsync(id);
-
-                if (!deleted)
-                    return NotFound();
-
-                TempData["SuccessMessage"] = CategoryDataMessage.CategoryDeletedSuccess;
-
-                return RedirectToAction(nameof(Index));
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-
-                return RedirectToAction(nameof(Index));
-            }
+            bool updated = await _update.HandleAsync(id, request);
+            if (!updated) return NotFound();
+            TempData["SuccessMessage"] = CategoryDataMessage.CategoryEditedSuccess;
+            return RedirectToAction(nameof(Index));
         }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError("Name", ex.Message);
+            ViewBag.CategoryId = id;
+            return View(request);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("Name", ex.Message);
+            ViewBag.CategoryId = id;
+            return View(request);
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var category = await _getById.HandleAsync(id);
+        if (category == null) return NotFound();
+        return View(category);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        try
+        {
+            bool deleted = await _delete.HandleAsync(id);
+            if (!deleted) return NotFound();
+            TempData["SuccessMessage"] = CategoryDataMessage.CategoryDeletedSuccess;
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Index));
     }
 }

@@ -1,11 +1,10 @@
 using ExpenseTracker.Database.Context;
 using ExpenseTracker.Database.Models;
-using ExpenseTracker.Features.Categories;
-using ExpenseTracker.Features.Dashboard;
-using ExpenseTracker.Features.Expenses;
-using ExpenseTracker.Interfaces.Categories;
-using ExpenseTracker.Interfaces.Dashboards;
-using ExpenseTracker.Interfaces.Expenses;
+using ExpenseTracker.Features.Expenses.Commands;
+using ExpenseTracker.Features.Expenses.Queries;
+using ExpenseTracker.Features.Categories.Commands;
+using ExpenseTracker.Features.Categories.Queries;
+using ExpenseTracker.Features.Dashboard.Queries;
 using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -16,17 +15,24 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<ICategoryCommandHandler, CategoryCommandHandler>();
-builder.Services.AddScoped<ICategoryQueryHandler, CategoryQueryHandler>();
+// CQRS command handlers
+builder.Services.AddScoped<CreateExpenseCommandHandler>();
+builder.Services.AddScoped<UpdateExpenseCommandHandler>();
+builder.Services.AddScoped<DeleteExpenseCommandHandler>();
+builder.Services.AddScoped<CreateCategoryCommandHandler>();
+builder.Services.AddScoped<UpdateCategoryCommandHandler>();
+builder.Services.AddScoped<DeleteCategoryCommandHandler>();
+
+// CQRS query handlers
+builder.Services.AddScoped<GetExpenseListQueryHandler>();
+builder.Services.AddScoped<GetExpenseByIdQueryHandler>();
+builder.Services.AddScoped<GetCategoryListQueryHandler>();
+builder.Services.AddScoped<GetCategoryByIdQueryHandler>();
+builder.Services.AddScoped<GetDashboardQueryHandler>();
+
+// Existing validators are used by command handlers.
 builder.Services.AddScoped<CategoryValidator>();
-
-//builder.Services.AddScoped<IExpenseService, ExpenseService>();
-builder.Services.AddScoped<IExpenseCommandHandler, ExpenseCommandHandler>();
-builder.Services.AddScoped<IExpenseQueryHandler, ExpenseQueryHandler>();
 builder.Services.AddScoped<ExpenseValidator>();
-
-builder.Services.AddScoped<IDashboardQueryService, DashboardQueryService>();
 
 // For Password Hashing and Authentication
 builder.Services.AddScoped<IPasswordHasher<User>,PasswordHasher<User>>();

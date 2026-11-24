@@ -28,8 +28,6 @@
         sortBy.Equals(eExpenseListSortBy.SortByAmount) && sortDirection.Equals(eSortOrder.Ascending)
             ? eSortOrder.Descending
             : eSortOrder.Ascending;
-
-    int rowNumber = 1;
 }
 
 <div class="container">
@@ -289,7 +287,7 @@
 
                         <!-- ID -->
                         <td>
-                            @rowNumber
+                            @expense.ExpenseID
                         </td>
 
 
@@ -335,8 +333,6 @@
                         </td>
 
                     </tr>
-
-                    rowNumber++;
                 }
 
             </tbody>
