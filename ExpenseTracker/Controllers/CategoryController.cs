@@ -2,6 +2,7 @@ using ExpenseTracker.Common.Constants;
 using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Features.Categories.Commands;
 using ExpenseTracker.Features.Categories.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,27 +11,17 @@ namespace ExpenseTracker.Controllers;
 [Authorize]
 public class CategoryController : BaseController
 {
-    private readonly GetCategoryListQueryHandler _getList;
-    private readonly GetCategoryByIdQueryHandler _getById;
-    private readonly CreateCategoryCommandHandler _create;
-    private readonly UpdateCategoryCommandHandler _update;
-    private readonly DeleteCategoryCommandHandler _delete;
+
+    private readonly ISender _sender;
 
     public CategoryController(
-        GetCategoryListQueryHandler getList,
-        GetCategoryByIdQueryHandler getById,
-        CreateCategoryCommandHandler create,
-        UpdateCategoryCommandHandler update,
-        DeleteCategoryCommandHandler delete)
+        ISender sender,
+        GetCategoryByIdQueryHandler getById)
     {
-        _getList = getList;
-        _getById = getById;
-        _create = create;
-        _update = update;
-        _delete = delete;
+        _sender = sender;
     }
 
-    public async Task<IActionResult> Index() => View(await _getList.HandleAsync());
+    public async Task<IActionResult> Index() => View(await _sender.Send(new GetCategoryListQuery()));
 
     [HttpGet]
     public IActionResult Create() => View();
@@ -42,7 +33,8 @@ public class CategoryController : BaseController
         if (!ModelState.IsValid) return View(request);
         try
         {
-            await _create.HandleAsync(request);
+            await _sender.Send(new CreateCategoryCommand(request));
+
             TempData["SuccessMessage"] = CategoryDataMessage.CategoryCreatedSuccess;
             return RedirectToAction(nameof(Index));
         }
@@ -61,7 +53,7 @@ public class CategoryController : BaseController
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var category = await _getById.HandleAsync(id);
+        var category = await _sender.Send(new GetCategoryByIdQuery(id));
         if (category == null) return NotFound();
         ViewBag.CategoryId = category.CategoryID;
         return View(new CategoryRequest { Name = category.Name, Description = category.Description });
@@ -78,7 +70,7 @@ public class CategoryController : BaseController
         }
         try
         {
-            bool updated = await _update.HandleAsync(id, request);
+            bool updated = await _sender.Send(new UpdateCategoryCommand(id, request));
             if (!updated) return NotFound();
             TempData["SuccessMessage"] = CategoryDataMessage.CategoryEditedSuccess;
             return RedirectToAction(nameof(Index));
@@ -100,7 +92,7 @@ public class CategoryController : BaseController
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var category = await _getById.HandleAsync(id);
+        var category = await _sender.Send(new GetCategoryByIdQuery(id));
         if (category == null) return NotFound();
         return View(category);
     }
@@ -111,7 +103,7 @@ public class CategoryController : BaseController
     {
         try
         {
-            bool deleted = await _delete.HandleAsync(id);
+            bool deleted = await _sender.Send(new DeleteCategoryCommand(id));
             if (!deleted) return NotFound();
             TempData["SuccessMessage"] = CategoryDataMessage.CategoryDeletedSuccess;
         }

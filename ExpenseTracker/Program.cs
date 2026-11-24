@@ -9,23 +9,30 @@ using ExpenseTracker.Validators;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+
+
+
 // CQRS command handlers
+
+
 builder.Services.AddScoped<CreateExpenseCommandHandler>();
 builder.Services.AddScoped<UpdateExpenseCommandHandler>();
 builder.Services.AddScoped<DeleteExpenseCommandHandler>();
-builder.Services.AddScoped<CreateCategoryCommandHandler>();
-builder.Services.AddScoped<UpdateCategoryCommandHandler>();
-builder.Services.AddScoped<DeleteCategoryCommandHandler>();
+
+////category
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateCategoryCommand).Assembly));
 
 // CQRS query handlers
 builder.Services.AddScoped<GetExpenseListQueryHandler>();
 builder.Services.AddScoped<GetExpenseByIdQueryHandler>();
+
 builder.Services.AddScoped<GetCategoryListQueryHandler>();
 builder.Services.AddScoped<GetCategoryByIdQueryHandler>();
 builder.Services.AddScoped<GetDashboardQueryHandler>();

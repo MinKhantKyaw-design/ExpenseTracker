@@ -3,6 +3,7 @@ using ExpenseTracker.DTOs.Requests;
 using ExpenseTracker.Features.Categories.Queries;
 using ExpenseTracker.Features.Expenses.Commands;
 using ExpenseTracker.Features.Expenses.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,34 +12,35 @@ namespace ExpenseTracker.Controllers;
 [Authorize]
 public class ExpensesController : BaseController
 {
+
+    private readonly ISender _sender;
     private readonly GetExpenseListQueryHandler _getList;
     private readonly GetExpenseByIdQueryHandler _getById;
     private readonly CreateExpenseCommandHandler _create;
     private readonly UpdateExpenseCommandHandler _update;
     private readonly DeleteExpenseCommandHandler _delete;
-    private readonly GetCategoryListQueryHandler _getCategories;
 
     public ExpensesController(
+        ISender sender,
         GetExpenseListQueryHandler getList,
         GetExpenseByIdQueryHandler getById,
         CreateExpenseCommandHandler create,
         UpdateExpenseCommandHandler update,
-        DeleteExpenseCommandHandler delete,
-        GetCategoryListQueryHandler getCategories)
+        DeleteExpenseCommandHandler delete)
     {
+        _sender = sender;
         _getList = getList;
         _getById = getById;
         _create = create;
         _update = update;
         _delete = delete;
-        _getCategories = getCategories;
     }
 
     public async Task<IActionResult> Index(GetExpenseListRequest request)
     {
         int userId = GetCurrentUserId();
         var expenses = await _getList.HandleAsync(userId, request);
-        ViewBag.Categories = await _getCategories.HandleAsync();
+        ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
         ViewBag.FromDate = request.FromDate;
         ViewBag.ToDate = request.ToDate;
         ViewBag.CategoryId = request.CategoryID;
@@ -50,7 +52,7 @@ public class ExpensesController : BaseController
     [HttpGet]
     public async Task<IActionResult> Create()
     {
-        ViewBag.Categories = await _getCategories.HandleAsync();
+        ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
         return View();
     }
 
@@ -60,7 +62,7 @@ public class ExpensesController : BaseController
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.Categories = await _getCategories.HandleAsync();
+            ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
             return View(request);
         }
 
@@ -73,7 +75,7 @@ public class ExpensesController : BaseController
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            ViewBag.Categories = await _getCategories.HandleAsync();
+            ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
             return View(request);
         }
     }
@@ -94,7 +96,7 @@ public class ExpensesController : BaseController
         };
 
         ViewBag.ExpenseId = expense.ExpenseID;
-        ViewBag.Categories = await _getCategories.HandleAsync();
+        ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
         return View(request);
     }
 
@@ -105,7 +107,7 @@ public class ExpensesController : BaseController
         if (!ModelState.IsValid)
         {
             ViewBag.ExpenseId = expenseID;
-            ViewBag.Categories = await _getCategories.HandleAsync();
+            ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
             return View(request);
         }
 
@@ -121,7 +123,7 @@ public class ExpensesController : BaseController
         {
             ModelState.AddModelError(string.Empty, ex.Message);
             ViewBag.ExpenseId = expenseID;
-            ViewBag.Categories = await _getCategories.HandleAsync();
+            ViewBag.Categories = await _sender.Send(new GetCategoryListQuery());
             return View(request);
         }
     }
